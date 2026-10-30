@@ -1,0 +1,6 @@
+{
+  "appId": "com.ilham.jadwalharian",
+  "appName": "Jadwal Harian",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

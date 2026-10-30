@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6C5CE7">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<title>Jadwal Harian</title>
+<style>
+:root{
+  --accent:#6C5CE7;
+  --bg:#F5F4FB; --card:#FFFFFF; --text:#1D1B2E; --muted:#7B7893; --line:#E7E5F2; --chip:#EEEDF8;
+  --shadow:0 6px 20px rgba(60,40,140,.08);
+}
+:root[data-mode="dark"]{
+  --bg:#12111C; --card:#1C1B2B; --text:#F1F0FA; --muted:#9A97B5; --line:#2C2B40; --chip:#26253A;
+  --shadow:0 6px 20px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-mode="auto"]{
+    --bg:#12111C; --card:#1C1B2B; --text:#F1F0FA; --muted:#9A97B5; --line:#2C2B40; --chip:#26253A;
+    --shadow:0 6px 20px rgba(0,0,0,.35);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;padding-bottom:110px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+
+/* header */
+.hero{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#ff7ab6));color:#fff;
+  padding:calc(env(safe-area-inset-top) + 22px) 0 74px;border-radius:0 0 32px 32px}
+.hero .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hello{font-size:14px;opacity:.85}
+.date{font-size:24px;font-weight:700;margin-top:2px;letter-spacing:-.3px}
+.iconbtn{width:40px;height:40px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center;color:#fff}
+.iconbtn svg{width:20px;height:20px}
+.nav{display:flex;gap:8px;margin-top:16px;align-items:center}
+.nav .pill{background:rgba(255,255,255,.18);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;color:#fff}
+.nav .pill.on{background:#fff;color:var(--accent)}
+
+.summary{margin-top:-52px;background:var(--card);border-radius:24px;box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:16px}
+.ring{--p:0;width:64px;height:64px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:conic-gradient(var(--accent) calc(var(--p)*1%), var(--chip) 0)}
+.ring span{width:50px;height:50px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:800;font-size:15px}
+.summary h3{margin:0;font-size:16px}
+.summary p{margin:3px 0 0;color:var(--muted);font-size:13px}
+
+/* list */
+.section{margin:22px 4px 8px;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.task{display:flex;gap:12px;align-items:stretch;background:var(--card);border-radius:20px;box-shadow:var(--shadow);
+  padding:14px;margin-bottom:12px;position:relative;overflow:hidden;transition:transform .15s}
+.task:active{transform:scale(.985)}
+.task::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+.task.now{outline:2px solid var(--c);}
+.time{width:52px;flex:none;font-size:13px;font-weight:700;line-height:1.35}
+.time small{display:block;color:var(--muted);font-weight:500}
+.emoji{width:44px;height:44px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:22px;
+  background:color-mix(in srgb,var(--c) 18%,transparent)}
+.info{flex:1;min-width:0;align-self:center}
+.info b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info span{display:block;font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info .badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;color:#fff;background:var(--c);padding:2px 8px;border-radius:999px;margin:0 0 4px}
+.check{width:32px;height:32px;border-radius:50%;border:2.5px solid var(--line);flex:none;align-self:center;display:grid;place-items:center;color:transparent;transition:.15s}
+.task.done .check{background:var(--c);border-color:var(--c);color:#fff}
+.task.done .info b{text-decoration:line-through;color:var(--muted)}
+.task.done{opacity:.7}
+
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty .big{font-size:54px}
+.empty h3{color:var(--text);margin:8px 0 4px}
+.btn{background:var(--accent);color:#fff;border-radius:14px;padding:12px 18px;font-weight:700}
+.btn.ghost{background:var(--chip);color:var(--text)}
+.btn.danger{background:#ff4d6d1a;color:#ff4d6d}
+
+.fab{position:fixed;right:max(18px,calc(50% - 280px + 18px));bottom:calc(env(safe-area-inset-bottom) + 22px);width:62px;height:62px;border-radius:22px;
+  background:var(--accent);color:#fff;font-size:32px;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 50%,transparent);display:grid;place-items:center}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,8,25,.5);opacity:0;pointer-events:none;transition:.2s;z-index:10}
+.overlay.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--card);border-radius:28px 28px 0 0;z-index:11;
+  transform:translateY(105%);transition:transform .25s ease;max-height:92vh;overflow:auto;padding:12px 18px calc(env(safe-area-inset-bottom) + 20px)}
+.sheet.open{transform:none}
+.grab{width:42px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 12px}
+.sheet h2{margin:4px 0 14px;font-size:20px}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+input[type=text],input[type=time],textarea,select{width:100%;font:inherit;color:var(--text);background:var(--chip);border:2px solid transparent;border-radius:14px;padding:12px 14px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:none;min-height:70px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 13px;border-radius:999px;background:var(--chip);font-size:14px;font-weight:600;border:2px solid transparent}
+.chip.on{border-color:var(--c,var(--accent));background:color-mix(in srgb,var(--c,var(--accent)) 16%,transparent)}
+.chip.day{min-width:46px;text-align:center;padding:9px 0}
+.chip.day.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.actions{display:flex;gap:10px;margin-top:20px}
+.actions .btn{flex:1}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:36px;height:36px;border-radius:50%;border:3px solid transparent;background:var(--c)}
+.sw.on{border-color:var(--text)}
+.catrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.catrow input[type=text]{padding:10px 12px}
+.catrow .em{width:60px;text-align:center}
+.catrow input[type=color]{width:42px;height:42px;border:0;background:none;padding:0;flex:none}
+.catrow .x{width:36px;height:36px;color:#ff4d6d;font-size:20px}
+.toast{position:fixed;left:50%;bottom:110px;transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.hint{font-size:13px;color:var(--muted);margin:6px 0}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <div class="row">
+    <div>
+      <div class="hello" id="hello"></div>
+      <div class="date" id="dateTitle"></div>
+    </div>
+    <button class="iconbtn" id="openSettings" aria-label="Pengaturan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+  <div class="nav">
+    <button class="iconbtn" id="prev" aria-label="Hari sebelumnya">‹</button>
+    <button class="pill" id="today">Hari ini</button>
+    <button class="iconbtn" id="next" aria-label="Hari berikutnya">›</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div class="summary">
+    <div class="ring" id="ring"><span id="pct">0%</span></div>
+    <div><h3 id="sumTitle"></h3><p id="sumSub"></p></div>
+  </div>
+  <div id="list"></div>
+</main>
+
+<button class="fab" id="add" aria-label="Tambah jadwal">+</button>
+
+<div class="overlay" id="overlay"></div>
+<section class="sheet" id="sheet"></section>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const DAYS = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+const DAYS_FULL = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+const ACCENTS = ["#6C5CE7","#0984E3","#00B894","#E17055","#E84393","#F39C12","#2D3436"];
+const KEY = "jadwal.harian.v1";
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,9);
+const safe = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const defaultCats = () => ([
+  {id:"kerja", name:"Kerja", emoji:"💼", color:"#6C5CE7"},
+  {id:"belajar", name:"Belajar", emoji:"📚", color:"#0984E3"},
+  {id:"olahraga", name:"Olahraga", emoji:"🏃", color:"#00B894"},
+  {id:"ibadah", name:"Ibadah", emoji:"🕌", color:"#F39C12"},
+  {id:"pribadi", name:"Pribadi", emoji:"🌿", color:"#E84393"},
+  {id:"istirahat", name:"Istirahat", emoji:"☕", color:"#E17055"},
+]);
+const sample = () => {
+  const all=[0,1,2,3,4,5,6], wk=[1,2,3,4,5];
+  const t=(title,start,end,cat,days,note="")=>({id:uid(),title,start,end,cat,days,note,remind:5});
+  return [
+    t("Bangun & rapikan tempat tidur","05:00","05:30","pribadi",all),
+    t("Olahraga pagi","05:30","06:15","olahraga",all,"Jogging / peregangan"),
+    t("Sarapan","06:30","07:00","istirahat",all),
+    t("Kerja fokus","08:00","11:30","kerja",wk,"Tugas paling penting dulu"),
+    t("Makan siang & istirahat","12:00","13:00","istirahat",all),
+    t("Rapat / tugas lanjutan","13:00","16:00","kerja",wk),
+    t("Belajar","19:30","20:30","belajar",all,"Baca buku / kursus online"),
+    t("Rencanakan besok","21:30","21:45","pribadi",all),
+  ];
+};
+
+let state;
+function load(){
+  try{ state = JSON.parse(localStorage.getItem(KEY)); }catch(e){ state=null; }
+  if(!state || !Array.isArray(state.tasks)){
+    state = {tasks:[], done:{}, cats:defaultCats(), settings:{name:"", accent:ACCENTS[0], mode:"auto"}};
+  }
+  state.done ||= {}; state.cats ||= defaultCats(); state.settings ||= {};
+  state.settings.accent ||= ACCENTS[0]; state.settings.mode ||= "auto";
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  scheduleReminders();
+}
+load();
+
+let view = new Date(); view.setHours(0,0,0,0);
+const dkey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const isToday = d => dkey(d)===dkey(new Date());
+const toMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+const cat = id => state.cats.find(c=>c.id===id) || state.cats[0] || {name:"-",emoji:"📌",color:"#6C5CE7"};
+const tasksFor = d => state.tasks.filter(t=>t.days.includes(d.getDay())).sort((a,b)=>toMin(a.start)-toMin(b.start));
+
+function applyTheme(){
+  const r=document.documentElement;
+  r.style.setProperty("--accent", state.settings.accent);
+  r.dataset.mode = state.settings.mode;
+  const dark = state.settings.mode==="dark" || (state.settings.mode==="auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#12111C" : state.settings.accent;
+}
+
+function render(){
+  applyTheme();
+  const now=new Date(), h=now.getHours();
+  const greet = h<11?"Selamat pagi":h<15?"Selamat siang":h<18?"Selamat sore":"Selamat malam";
+  $("#hello").textContent = greet + (state.settings.name ? ", "+state.settings.name : "") + " 👋";
+  $("#dateTitle").textContent = `${DAYS_FULL[view.getDay()]}, ${view.getDate()} ${MONTHS[view.getMonth()]}`;
+  $("#today").classList.toggle("on", isToday(view));
+
+  const tasks = tasksFor(view), k = dkey(view), done = state.done[k] || {};
+  const nDone = tasks.filter(t=>done[t.id]).length;
+  const pct = tasks.length ? Math.round(nDone/tasks.length*100) : 0;
+  $("#ring").style.setProperty("--p", pct);
+  $("#pct").textContent = pct+"%";
+  $("#sumTitle").textContent = tasks.length ? `${nDone} dari ${tasks.length} selesai` : "Belum ada jadwal";
+  $("#sumSub").textContent = !tasks.length ? "Tambahkan kegiatan untuk hari ini"
+    : pct===100 ? "Hebat! Semua selesai 🎉" : "Terus semangat, kamu pasti bisa!";
+
+  const nowMin = now.getHours()*60+now.getMinutes();
+  const list = $("#list");
+  if(!tasks.length){
+    list.innerHTML = `<div class="empty"><div class="big">🗓️</div><h3>Hari ini masih kosong</h3>
+      <p>Tekan tombol <b>+</b> untuk membuat jadwal sendiri,<br>atau mulai dari contoh jadwal.</p>
+      ${state.tasks.length? "" : `<button class="btn" id="loadSample">Pakai contoh jadwal</button>`}</div>`;
+    const b=$("#loadSample"); if(b) b.onclick=()=>{state.tasks=sample();save();render();toast("Contoh jadwal dimuat — silakan ubah sesuka hati");};
+    return;
+  }
+  let html="", lastBlock="";
+  const block = m => m<12*60?"Pagi":m<15*60?"Siang":m<18*60?"Sore":"Malam";
+  for(const t of tasks){
+    const b=block(toMin(t.start));
+    if(b!==lastBlock){ html+=`<div class="section">${b}</div>`; lastBlock=b; }
+    const c=cat(t.cat), isNow = isToday(view) && toMin(t.start)<=nowMin && nowMin<toMin(t.end);
+    html+=`<div class="task ${done[t.id]?"done":""} ${isNow?"now":""}" style="--c:${safe(c.color)}" data-id="${t.id}">
+      <div class="time">${safe(t.start)}<small>${safe(t.end)}</small></div>
+      <div class="emoji">${safe(c.emoji)}</div>
+      <div class="info">${isNow?`<span class="badge">SEKARANG</span>`:""}<b>${safe(t.title)}</b><span>${safe(t.note||c.name)}</span></div>
+      <button class="check" data-check="${t.id}" aria-label="Tandai selesai">✓</button>
+    </div>`;
+  }
+  list.innerHTML=html;
+}
+
+$("#list").addEventListener("click", e=>{
+  const chk = e.target.closest("[data-check]");
+  if(chk){
+    const k=dkey(view); state.done[k] ||= {};
+    state.done[k][chk.dataset.check] = !state.done[k][chk.dataset.check];
+    save(); render(); return;
+  }
+  const card = e.target.closest(".task");
+  if(card) openTask(card.dataset.id);
+});
+$("#prev").onclick = ()=>{ view.setDate(view.getDate()-1); render(); };
+$("#next").onclick = ()=>{ view.setDate(view.getDate()+1); render(); };
+$("#today").onclick = ()=>{ view=new Date(); view.setHours(0,0,0,0); render(); };
+$("#add").onclick = ()=>openTask(null);
+$("#openSettings").onclick = openSettings;
+
+/* sheet helpers */
+const sheet=$("#sheet"), overlay=$("#overlay");
+function openSheet(html){ sheet.innerHTML=`<div class="grab"></div>`+html; sheet.classList.add("open"); overlay.classList.add("open"); sheet.scrollTop=0; }
+function closeSheet(){ sheet.classList.remove("open"); overlay.classList.remove("open"); }
+overlay.onclick = closeSheet;
+let toastT;
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2400); }
+
+function openTask(id){
+  const ex = id && state.tasks.find(t=>t.id===id);
+  const nowH = new Date().getHours();
+  const pad = n=>String(n).padStart(2,"0");
+  const t = ex ? {...ex, days:[...ex.days]} : {id:uid(), title:"", start:`${pad(Math.min(nowH+1,22))}:00`, end:`${pad(Math.min(nowH+2,23))}:00`,
+    cat:state.cats[0]?.id, days:[view.getDay()], note:"", remind:5};
+  openSheet(`
+    <h2>${ex?"Ubah jadwal":"Jadwal baru"}</h2>
+    <label>Nama kegiatan</label>
+    <input type="text" id="f_title" placeholder="mis. Belajar bahasa Inggris" value="${safe(t.title)}" maxlength="60">
+    <div class="two">
+      <div><label>Mulai</label><input type="time" id="f_start" value="${t.start}"></div>
+      <div><label>Selesai</label><input type="time" id="f_end" value="${t.end}"></div>
+    </div>
+    <label>Kategori</label>
+    <div class="chips" id="f_cats">${state.cats.map(c=>`<button type="button" class="chip ${c.id===t.cat?"on":""}" style="--c:${safe(c.color)}" data-cat="${c.id}">${safe(c.emoji)} ${safe(c.name)}</button>`).join("")}</div>
+    <label>Ulangi pada hari</label>
+    <div class="chips" id="f_days">${[1,2,3,4,5,6,0].map(d=>`<button type="button" class="chip day ${t.days.includes(d)?"on":""}" data-day="${d}">${DAYS[d]}</button>`).join("")}</div>
+    <label>Catatan (opsional)</label>
+    <textarea id="f_note" placeholder="Detail, target, dll.">${safe(t.note)}</textarea>
+    <label>Pengingat</label>
+    <select id="f_remind">
+      <option value="">Tanpa pengingat</option>
+      ${[0,5,10,15,30].map(m=>`<option value="${m}" ${String(t.remind)===String(m)?"selected":""}>${m===0?"Tepat waktu":m+" menit sebelumnya"}</option>`).join("")}
+    </select>
+    <div class="actions">
+      ${ex?`<button class="btn danger" id="f_del">Hapus</button>`:`<button class="btn ghost" id="f_cancel">Batal</button>`}
+      <button class="btn" id="f_save">Simpan</button>
+    </div>`);
+  let selCat=t.cat; const days=new Set(t.days);
+  $("#f_cats").onclick=e=>{const b=e.target.closest("[data-cat]"); if(!b)return; selCat=b.dataset.cat;
+    document.querySelectorAll("#f_cats .chip").forEach(x=>x.classList.toggle("on",x===b));};
+  $("#f_days").onclick=e=>{const b=e.target.closest("[data-day]"); if(!b)return; const d=+b.dataset.day;
+    days.has(d)?days.delete(d):days.add(d); b.classList.toggle("on",days.has(d));};
+  const cancel=$("#f_cancel"); if(cancel) cancel.onclick=closeSheet;
+  const del=$("#f_del"); if(del) del.onclick=()=>{ if(!confirm("Hapus jadwal ini?"))return;
+    state.tasks=state.tasks.filter(x=>x.id!==t.id); save(); closeSheet(); render(); toast("Jadwal dihapus"); };
+  $("#f_save").onclick=()=>{
+    const title=$("#f_title").value.trim(), start=$("#f_start").value, end=$("#f_end").value;
+    if(!title) return toast("Isi nama kegiatan dulu");
+    if(!start||!end) return toast("Isi jam mulai dan selesai");
+    if(toMin(end)<=toMin(start)) return toast("Jam selesai harus setelah jam mulai");
+    if(!days.size) return toast("Pilih minimal satu hari");
+    const r=$("#f_remind").value;
+    const nt={id:t.id,title,start,end,cat:selCat,days:[...days],note:$("#f_note").value.trim(),remind:r===""?null:+r};
+    const i=state.tasks.findIndex(x=>x.id===t.id);
+    i>=0 ? state.tasks[i]=nt : state.tasks.push(nt);
+    save(); closeSheet(); render(); toast("Tersimpan ✓");
+    if(nt.remind!==null) askNotifPermission();
+  };
+  if(!ex) setTimeout(()=>$("#f_title").focus(),300);
+}
+
+function openSettings(){
+  const s=state.settings;
+  openSheet(`
+    <h2>Pengaturan</h2>
+    <label>Nama panggilan</label>
+    <input type="text" id="s_name" value="${safe(s.name)}" placeholder="Nama kamu" maxlength="24">
+    <label>Warna tema</label>
+    <div class="swatches" id="s_acc">${ACCENTS.map(a=>`<button class="sw ${a===s.accent?"on":""}" style="--c:${a}" data-a="${a}" aria-label="${a}"></button>`).join("")}</div>
+    <label>Tampilan</label>
+    <div class="chips" id="s_mode">${[["auto","Otomatis"],["light","Terang"],["dark","Gelap"]].map(([v,n])=>`<button class="chip ${s.mode===v?"on":""}" data-m="${v}">${n}</button>`).join("")}</div>
+    <label>Kategori (bisa diubah sendiri)</label>
+    <div id="s_cats"></div>
+    <button class="btn ghost" id="s_addcat" style="width:100%">+ Tambah kategori</button>
+    <label>Data</label>
+    <div class="chips">
+      <button class="chip" id="s_sample">Muat contoh jadwal</button>
+      <button class="chip" id="s_export">Ekspor</button>
+      <button class="chip" id="s_import">Impor</button>
+      <button class="chip" id="s_reset" style="color:#ff4d6d">Hapus semua</button>
+    </div>
+    <p class="hint">Semua data disimpan di perangkatmu saja.</p>
+    <div class="actions"><button class="btn" id="s_done">Selesai</button></div>`);
+  const drawCats=()=>{ $("#s_cats").innerHTML=state.cats.map(c=>`<div class="catrow" data-id="${c.id}">
+      <input type="text" class="em" value="${safe(c.emoji)}" maxlength="2" data-f="emoji">
+      <input type="text" value="${safe(c.name)}" maxlength="18" data-f="name">
+      <input type="color" value="${safe(c.color)}" data-f="color">
+      <button class="x" data-del="${c.id}" aria-label="Hapus">✕</button></div>`).join(""); };
+  drawCats();
+  $("#s_cats").oninput=e=>{const row=e.target.closest(".catrow"); if(!row)return; const c=state.cats.find(x=>x.id===row.dataset.id);
+    c[e.target.dataset.f]=e.target.value; save(); render();};
+  $("#s_cats").onclick=e=>{const b=e.target.closest("[data-del]"); if(!b)return;
+    if(state.cats.length<=1) return toast("Minimal harus ada satu kategori");
+    state.cats=state.cats.filter(c=>c.id!==b.dataset.del); save(); drawCats(); render();};
+  $("#s_addcat").onclick=()=>{state.cats.push({id:uid(),name:"Baru",emoji:"⭐",color:"#6C5CE7"}); save(); drawCats(); render();};
+  $("#s_name").oninput=e=>{s.name=e.target.value.trim(); save(); render();};
+  $("#s_acc").onclick=e=>{const b=e.target.closest("[data-a]"); if(!b)return; s.accent=b.dataset.a; save(); render();
+    document.querySelectorAll("#s_acc .sw").forEach(x=>x.classList.toggle("on",x===b));};
+  $("#s_mode").onclick=e=>{const b=e.target.closest("[data-m]"); if(!b)return; s.mode=b.dataset.m; save(); render();
+    document.querySelectorAll("#s_mode .chip").forEach(x=>x.classList.toggle("on",x===b));};
+  $("#s_sample").onclick=()=>{ if(state.tasks.length && !confirm("Contoh jadwal akan ditambahkan ke jadwal yang sudah ada. Lanjut?"))return;
+    state.tasks.push(...sample()); save(); render(); toast("Contoh jadwal ditambahkan"); };
+  $("#s_export").onclick=()=>{
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="jadwal-harian.json"; a.click(); };
+  $("#s_import").onclick=()=>{ const i=document.createElement("input"); i.type="file"; i.accept="application/json";
+    i.onchange=async()=>{ try{ const d=JSON.parse(await i.files[0].text()); if(!Array.isArray(d.tasks)) throw 0;
+      state=d; load_fix(); save(); closeSheet(); render(); toast("Data berhasil diimpor"); }catch(e){ toast("File tidak valid"); } }; i.click(); };
+  $("#s_reset").onclick=()=>{ if(!confirm("Hapus SEMUA jadwal dan riwayat?"))return;
+    state={tasks:[],done:{},cats:defaultCats(),settings:{name:"",accent:ACCENTS[0],mode:"auto"}}; save(); closeSheet(); render(); };
+  $("#s_done").onclick=closeSheet;
+}
+function load_fix(){ state.done ||= {}; state.cats ||= defaultCats(); state.settings ||= {}; state.settings.accent ||= ACCENTS[0]; state.settings.mode ||= "auto"; }
+
+/* ---- Pengingat ---- */
+const LN = () => window.Capacitor?.Plugins?.LocalNotifications;
+async function askNotifPermission(){
+  try{
+    if(LN()){ const p=await LN().checkPermissions(); if(p.display!=="granted") await LN().requestPermissions(); scheduleReminders(); }
+    else if("Notification" in window && Notification.permission==="default") await Notification.requestPermission();
+  }catch(e){}
+}
+const hash = s => { let h=0; for(const c of s) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h)%2000000000; };
+let schedT;
+function scheduleReminders(){
+  clearTimeout(schedT);
+  schedT=setTimeout(async()=>{
+    const ln=LN(); if(!ln) return;
+    try{
+      const perm=await ln.checkPermissions(); if(perm.display!=="granted") return;
+      const pending=await ln.getPending(); if(pending.notifications?.length) await ln.cancel({notifications:pending.notifications});
+      const out=[], now=Date.now();
+      for(let i=0;i<7;i++){
+        const d=new Date(); d.setDate(d.getDate()+i); d.setHours(0,0,0,0);
+        for(const t of tasksFor(d)){
+          if(t.remind===null||t.remind===undefined) continue;
+          const [h,m]=t.start.split(":").map(Number);
+          const at=new Date(d); at.setHours(h,m-t.remind,0,0);
+          if(at.getTime()<=now) continue;
+          out.push({id:hash(t.id+dkey(d)), title:`${cat(t.cat).emoji} ${t.title}`,
+            body: t.remind? `Mulai ${t.remind} menit lagi (${t.start})` : `Waktunya mulai (${t.start})`,
+            schedule:{at, allowWhileIdle:true}});
+        }
+      }
+      if(out.length) await ln.schedule({notifications:out.slice(0,60)});
+    }catch(e){}
+  },400);
+}
+
+/* pengingat di browser saat halaman terbuka */
+const fired=new Set();
+setInterval(()=>{
+  if(LN()||!("Notification" in window)||Notification.permission!=="granted") return;
+  const now=new Date(), nm=now.getHours()*60+now.getMinutes();
+  for(const t of tasksFor(now)){
+    if(t.remind===null||t.remind===undefined) continue;
+    const key=dkey(now)+t.id;
+    if(!fired.has(key) && nm===toMin(t.start)-t.remind){ fired.add(key); new Notification(`${cat(t.cat).emoji} ${t.title}`,{body:`Mulai pukul ${t.start}`}); }
+  }
+},20000);
+
+setInterval(()=>{ if(isToday(view) && !sheet.classList.contains("open")) render(); },60000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) render(); });
+render(); scheduleReminders();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>
